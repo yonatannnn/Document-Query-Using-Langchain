@@ -2,20 +2,13 @@ from langchain_community.vectorstores import Cassandra
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain_openai import OpenAIEmbeddings, OpenAI
 from langchain.text_splitter import CharacterTextSplitter
-from PyPDF2 import PdfReader
+from pdf_loader import load_pdf
+from website_loader import load_website
 import cassio
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
-def load_pdf(file_path):
-    """Load and extract text from PDF"""
-    reader = PdfReader(file_path)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text() + "\n"
-    return text
 
 def setup_cassandra_vectorstore():
     """Initialize Cassandra vector store"""
@@ -44,12 +37,14 @@ if __name__ == "__main__":
         if not os.getenv(var):
             print(f"Error: {var} is not set in environment variables")
             exit(1)
-    
-    # Load PDF
-    pdf_text = load_pdf("soccer.pdf")
-    print("PDF loaded successfully")
-    print(f"First 500 characters: {pdf_text[:500]}...")
-    
+
+    # Load website
+    website_text = load_website("Artificial intelligence")
+    print("Website loaded successfully")
+
+
+    print(website_text)  # Print first 500 characters of the website text
+
     # Initialize vector store
     print("Setting up Cassandra vector store...")
     vector_store = setup_cassandra_vectorstore()
@@ -61,7 +56,7 @@ if __name__ == "__main__":
         chunk_overlap=200
 
     )
-    texts = text_splitter.split_text(pdf_text)
+    texts = text_splitter.split_text(website_text)
     print(f"Split into {len(texts)} chunks")
     
     # Add to vector store
@@ -73,8 +68,10 @@ if __name__ == "__main__":
     
     # Test query
     llm = OpenAI(openai_api_key=os.getenv("OPENAI_API_KEY"), temperature=0)
-    
-    query = input("Enter your question: ")
-    answer = index.query(query, llm=llm)
-    print(f"Q: {query}")
-    print(f"A: {answer}")
+
+
+    while True:
+        query = input("Enter your question: ")
+        answer = index.query(query, llm=llm)
+        print(f"Q: {query}")
+        print(f"A: {answer}")
